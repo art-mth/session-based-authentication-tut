@@ -9,9 +9,9 @@ In order to get the code to run you will need to set up a few things.
 
 * run `npm install`
 
-* Switch out the database var dbUri = "mongodb://"+dbuser+":"+dbpassword+"@ds045614.mongolab.com:45614/authentication-tut" in `db.js` line 14 to your own local or remote database.
+* Switch out the database var dbUri = "mongodb://"+dbuser+":"+dbpassword+"@ds045614.mongolab.com:45614/authentication-tut" in `db.js` line 14 to your own local or remote database
 
-* Create a file named .env and add data of the following form to it. Obviously using your own data.
+* Create a file named .env and add data of the following form to it; Obviously using your own data
 
 ```
 	{

@@ -9,11 +9,10 @@ var session = require("express-session");
 var bcrypt = require("bcrypt-nodejs");
 var db = require("./db.js");
 // connect-mongo manages the session storage for our app with a mongo database so we do not
-// have to use MemoryStore which is a huge memory leak and can eat up all our RAM and make our application
-// extremely slow. Also the sessions will be gone if the server restarts what obviusly should not happen.
+// have to use the default MemoryStore which is a huge memory leak and not usable in a production environment
 var MongoStore = require('connect-mongo')(session);
 
-// module for logging our requests to the server
+// HTTP request logger middleware for express
 var morgan = require("morgan");
 //A nice way to load environment variables that you do not want to store in your source code
 var habitat = require("habitat");
@@ -23,12 +22,6 @@ var port = process.env.PORT || 3000;
 var app = express();
 
 app.use(morgan("dev"));
-// the bodyParser urlencoded parses bodies of Content-Type application/x-www-form-urlencoded
-// most browsers send form data like this. The extended option specifies the deserialization
-// algorithm. Either qs or querystring. They vary in complexity and it is a question of what you need
-// for your use case. If you send complex data which is not flat(array, object) you will need qs
-// that only happens when you send data from an ajax request and not from html forms
-// forms do not send nested data so extended false --> queryString is enough
 app.use(bodyParser.urlencoded({
   extended: false
 }));
@@ -36,10 +29,11 @@ app.use(bodyParser.urlencoded({
 // setting up the session handling
 app.use(session({
   store: new MongoStore({
+    // reuse the already set up database connection
     mongooseConnection: db.connection
   }),
-  // Or use your local mongo database
-  // store: new MongoStore({ url: "mongodb://localhost/test-session" });
+  // or use your local mongo database
+  // store: new MongoStore({ url: "mongodb://localhost/session-storage" });
   secret: env.get("session_secret"),
   resave: false,
   saveUninitialized: true
@@ -72,10 +66,13 @@ app.post("/api/signin", function(req, res) {
       console.log("User: ", username, " does not exists");
       res.redirect("/signin");
     } else {
-      // compare saved and user input password
+      // compare user input and saved password
       bcrypt.compare(password, user.password, function(err, isMatch) {
         if (isMatch) {
+          // create a session 
           req.session.regenerate(function() {
+            // an hour in milliseconds sets the expiration date for the session
+            req.session.maxAge = 3600000;
             req.session.user = user;
             res.redirect("/");
           });
@@ -108,6 +105,8 @@ app.post("/api/signup", function(req, res) {
           console.log("saved user to db");
           req.session.regenerate(function(err) {
             if (err) throw err;
+            // an hour in milliseconds sets the expiration date for the session
+            req.session.maxAge = 3600000;
             req.session.user = user;
             res.redirect("/")
           });

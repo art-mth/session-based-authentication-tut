@@ -2,6 +2,7 @@
 var mongoose = require("mongoose");
 // habitat makes it easy to read environment variables from named files
 var habitat = require("habitat");
+// read in data from .env file access via env
 var env = habitat.load(__dirname + "/.env");
 
 var dbuser = env.get("db_user");
@@ -15,7 +16,6 @@ var dbUri = "mongodb://"+dbuser+":"+dbpassword+"@ds045614.mongolab.com:45614/aut
 var db = {};
 
 mongoose.connect(dbUri);
-
 db.connection = mongoose.connection;
 
 db.userSchema = new mongoose.Schema({
